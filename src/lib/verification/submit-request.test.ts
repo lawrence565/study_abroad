@@ -38,29 +38,115 @@ describe('submitVerificationRequest', () => {
     ).toThrow(/domain/i);
   });
 
-  it('normalizes a valid submission into a pending request payload', () => {
-    const schools = loadSchoolSeed();
+  it('returns normalized school_email fields through the repository seam', () => {
+    const dependencies = {
+      schoolRepository: {
+        findById(schoolId: string) {
+          return schoolId === 'boston-university'
+            ? {
+                id: 'boston-university',
+                name: 'Boston University',
+                country: 'US',
+                city: 'Boston',
+                ranking: 27,
+                emailDomain: 'BU.EDU',
+                website: 'https://www.bu.edu',
+                programs: [],
+              }
+            : undefined;
+        },
+      },
+      verificationRequestRepository: {
+        create(request: {
+          id: string;
+          schoolId: string;
+          schoolName: string;
+          schoolDomain: string;
+          method: 'school_email' | 'manual_review';
+          status: 'pending' | 'approved' | 'rejected';
+          schoolEmail?: string;
+          evidenceSummary?: string;
+          submittedAt: string;
+        }) {
+          return request;
+        },
+      },
+      now: () => new Date('2026-03-26T00:00:00.000Z'),
+    } satisfies Parameters<typeof submitVerificationRequest>[1];
 
     const request = submitVerificationRequest(
       {
         schoolId: 'boston-university',
         method: 'school_email',
-        schoolEmail: 'student@bu.edu',
+        schoolEmail: '  Student@BU.EDU  ',
       },
-      {
-        schools,
-        now: () => new Date('2026-03-26T00:00:00.000Z'),
-      },
+      dependencies,
     );
 
-    expect(request).toMatchObject({
+    expect(request).toEqual({
+      id: expect.any(String),
       schoolId: 'boston-university',
+      schoolName: 'Boston University',
+      schoolDomain: 'bu.edu',
       method: 'school_email',
       schoolEmail: 'student@bu.edu',
-      status: 'pending',
-      schoolDomain: 'bu.edu',
       submittedAt: '2026-03-26T00:00:00.000Z',
     });
-    expect(request.id).toEqual(expect.any(String));
+  });
+
+  it('returns normalized manual_review fields through the repository seam', () => {
+    const dependencies = {
+      schoolRepository: {
+        findById(schoolId: string) {
+          return schoolId === 'boston-university'
+            ? {
+                id: 'boston-university',
+                name: 'Boston University',
+                country: 'US',
+                city: 'Boston',
+                ranking: 27,
+                emailDomain: 'bu.edu',
+                website: 'https://www.bu.edu',
+                programs: [],
+              }
+            : undefined;
+        },
+      },
+      verificationRequestRepository: {
+        create(request: {
+          id: string;
+          schoolId: string;
+          schoolName: string;
+          schoolDomain: string;
+          method: 'school_email' | 'manual_review';
+          status: 'pending' | 'approved' | 'rejected';
+          schoolEmail?: string;
+          evidenceSummary?: string;
+          submittedAt: string;
+        }) {
+          return request;
+        },
+      },
+      now: () => new Date('2026-03-26T00:00:00.000Z'),
+    } satisfies Parameters<typeof submitVerificationRequest>[1];
+
+    const request = submitVerificationRequest(
+      {
+        schoolId: 'boston-university',
+        method: 'manual_review',
+        evidenceSummary: '  transcript and passport   ',
+      },
+      dependencies,
+    );
+
+    expect(request).toEqual({
+      id: expect.any(String),
+      schoolId: 'boston-university',
+      schoolName: 'Boston University',
+      schoolDomain: 'bu.edu',
+      method: 'manual_review',
+      evidenceSummary: 'transcript and passport',
+      submittedAt: '2026-03-26T00:00:00.000Z',
+    });
   });
 });

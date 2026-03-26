@@ -1,6 +1,7 @@
 import { VerificationForm } from '@/components/verification-form';
 import { resolveDemoSession } from '@/lib/auth/demo-session';
 import { loadSchoolSeed } from '@/lib/schools/load-seed';
+import { submitVerificationAction } from '@/app/verification/actions';
 
 type SearchParams = {
   role?: string | string[];
@@ -13,7 +14,7 @@ type VerificationPageProps = {
 export default async function Page({ searchParams }: VerificationPageProps) {
   await searchParams;
   const session = await resolveDemoSession();
-  const schools = loadSchoolSeed();
+  const schools = loadSchoolSeed().map(({ id, name }) => ({ id, name }));
 
   return (
     <section aria-labelledby="verification-heading" id="verification">
@@ -22,7 +23,11 @@ export default async function Page({ searchParams }: VerificationPageProps) {
         Marketplace and event-hosting permissions require verified status, even
         though those modules are deferred.
       </p>
-      <VerificationForm schools={schools} currentRole={session.role} />
+      <VerificationForm
+        schools={schools}
+        currentRole={session.role}
+        action={submitVerificationAction}
+      />
     </section>
   );
 }

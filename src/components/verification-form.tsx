@@ -1,17 +1,54 @@
+'use client';
+
+import { useActionState } from 'react';
 import type { DemoRole } from '@/types/auth';
-import type { School } from '@/types/schools';
+import type {
+  VerificationActionState,
+  VerificationSchoolOption,
+} from '@/types/verification';
 
 type VerificationFormProps = {
-  schools: School[];
+  schools: VerificationSchoolOption[];
   currentRole: DemoRole;
+  action: (
+    previousState: VerificationActionState,
+    formData: FormData,
+  ) => Promise<VerificationActionState>;
+  initialState?: VerificationActionState;
 };
 
-export function VerificationForm({ schools, currentRole }: VerificationFormProps) {
+function formatRequestSummary(state: Extract<VerificationActionState, { status: 'success' }>) {
+  const { request } = state;
+
+  return (
+    <>
+      <p>{state.message}</p>
+      <p>
+        {request.schoolName} ({request.schoolDomain})
+      </p>
+      <p>Method: {request.method}</p>
+      {request.schoolEmail ? <p>School email: {request.schoolEmail}</p> : null}
+      {request.evidenceSummary ? (
+        <p>Evidence summary: {request.evidenceSummary}</p>
+      ) : null}
+      <p>Submitted at: {request.submittedAt}</p>
+    </>
+  );
+}
+
+export function VerificationForm({
+  schools,
+  currentRole,
+  action,
+  initialState = { status: 'idle' },
+}: VerificationFormProps) {
+  const [state, formAction, pending] = useActionState(action, initialState);
+
   return (
     <section aria-labelledby="verification-form-heading">
       <h2 id="verification-form-heading">Verification form</h2>
       <p>Current demo role: {currentRole}.</p>
-      <form>
+      <form action={formAction}>
         <div>
           <label htmlFor="school">School</label>
           <select id="school" name="schoolId" defaultValue={schools[0]?.id ?? ''}>
@@ -52,7 +89,17 @@ export function VerificationForm({ schools, currentRole }: VerificationFormProps
           <label htmlFor="evidence-summary">Evidence summary</label>
           <textarea id="evidence-summary" name="evidenceSummary" />
         </div>
-        <button type="submit">Request verification</button>
+
+        {state.status === 'success' ? (
+          <div role="status">{formatRequestSummary(state)}</div>
+        ) : null}
+        {state.status === 'error' ? (
+          <p role="alert">{state.message}</p>
+        ) : null}
+
+        <button type="submit" disabled={pending}>
+          {pending ? 'Requesting verification...' : 'Request verification'}
+        </button>
       </form>
     </section>
   );

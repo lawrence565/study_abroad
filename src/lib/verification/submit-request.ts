@@ -3,6 +3,7 @@ import type { School } from '@/types/schools';
 import type {
   VerificationRequest,
   VerificationRequestInput,
+  VerificationRequestSummary,
 } from '@/types/verification';
 
 export type SchoolRepository = {
@@ -14,9 +15,10 @@ export type VerificationRequestRepository = {
 };
 
 export type SubmitVerificationRequestDependencies = {
-  schoolRepository: SchoolRepository;
-  verificationRequestRepository: VerificationRequestRepository;
+  schoolRepository?: SchoolRepository;
+  verificationRequestRepository?: VerificationRequestRepository;
   now?: () => Date;
+  schools?: School[];
 };
 
 function normalizeEmail(email: string): string {
@@ -53,17 +55,44 @@ function getVerificationRequestRepository(): VerificationRequestRepository {
   };
 }
 
+function toVerificationRequestSummary(
+  request: VerificationRequest,
+): VerificationRequestSummary {
+  const summary: VerificationRequestSummary = {
+    id: request.id,
+    schoolId: request.schoolId,
+    schoolName: request.schoolName,
+    schoolDomain: request.schoolDomain,
+    method: request.method,
+    submittedAt: request.submittedAt,
+  };
+
+  if (request.schoolEmail) {
+    summary.schoolEmail = request.schoolEmail;
+  }
+
+  if (request.evidenceSummary) {
+    summary.evidenceSummary = request.evidenceSummary;
+  }
+
+  return summary;
+}
+
 export function submitVerificationRequest(
   input: VerificationRequestInput,
-  dependencies: Partial<SubmitVerificationRequestDependencies> & {
-    schools: School[];
-  },
-): VerificationRequest {
+  dependencies: SubmitVerificationRequestDependencies,
+): VerificationRequestSummary {
   const schoolRepository =
-    dependencies.schoolRepository ?? getSchoolRepository(dependencies.schools);
+    dependencies.schoolRepository ??
+    (dependencies.schools ? getSchoolRepository(dependencies.schools) : undefined);
   const verificationRequestRepository =
     dependencies.verificationRequestRepository ??
     getVerificationRequestRepository();
+
+  if (!schoolRepository) {
+    throw new Error('A school repository or seed schools are required.');
+  }
+
   const school = schoolRepository.findById(input.schoolId);
 
   if (!school) {
@@ -80,7 +109,7 @@ export function submitVerificationRequest(
       throw new Error('Manual review requires an evidence summary.');
     }
 
-    return verificationRequestRepository.create({
+    const request = verificationRequestRepository.create({
       id: randomUUID(),
       schoolId: school.id,
       schoolName: school.name,
@@ -90,6 +119,8 @@ export function submitVerificationRequest(
       evidenceSummary,
       submittedAt,
     });
+
+    return toVerificationRequestSummary(request);
   }
 
   const schoolEmail = normalizeEmail(input.schoolEmail ?? '');
@@ -102,7 +133,7 @@ export function submitVerificationRequest(
     throw new Error('School email domain must match the selected school record.');
   }
 
-  return verificationRequestRepository.create({
+  const request = verificationRequestRepository.create({
     id: randomUUID(),
     schoolId: school.id,
     schoolName: school.name,
@@ -112,4 +143,6 @@ export function submitVerificationRequest(
     schoolEmail,
     submittedAt,
   });
+
+  return toVerificationRequestSummary(request);
 }
