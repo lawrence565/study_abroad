@@ -45,7 +45,8 @@ function classifyRequirement(requirement: string): RequirementModel {
     normalizedRequirement.includes('sat') ||
     normalizedRequirement.includes('act') ||
     normalizedRequirement.includes('gre') ||
-    normalizedRequirement.includes('gmat')
+    normalizedRequirement.includes('gmat') ||
+    normalizedRequirement.includes('admissions test')
   ) {
     return 'standardized';
   }

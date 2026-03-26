@@ -3,7 +3,7 @@ import { scoreProfile } from '@/lib/profile-match/score-profile';
 import type { School } from '@/types/schools';
 
 describe('scoreProfile', () => {
-  it('scores GPA and language inputs deterministically for the same profile', () => {
+  it('scores GPA and standardized inputs deterministically for the same profile', () => {
     const schools = loadSchoolSeed();
     const profile = {
       gpa: 3.2,
@@ -106,6 +106,12 @@ describe('scoreProfile', () => {
             level: 'graduate',
             requirements: ['IELTS or TOEFL'],
           },
+          {
+            code: 'BA-EXAM',
+            name: 'Exam Track',
+            level: 'undergraduate',
+            requirements: ['Admissions test'],
+          },
         ],
       },
     ];
@@ -132,6 +138,11 @@ describe('scoreProfile', () => {
 
     expect(lowReasons.some((reason) => /modest fit/i.test(reason))).toBe(true);
     expect(highReasons.some((reason) => /strong fit/i.test(reason))).toBe(true);
+    expect(
+      highScore.find((result) => result.programCode === 'BA-EXAM')?.reasons.some(
+        (reason) => /admissions test/i.test(reason),
+      ),
+    ).toBe(true);
     expect(highScore.every((result) => result.score >= lowScore[0].score)).toBe(
       true,
     );
