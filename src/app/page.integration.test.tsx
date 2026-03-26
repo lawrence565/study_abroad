@@ -10,7 +10,7 @@ vi.mock('next/headers', () => ({
   cookies: cookiesMock,
 }));
 
-describe('landing page', () => {
+describe('landing page integration', () => {
   beforeEach(() => {
     cookieGetMock.mockReset();
     cookiesMock.mockResolvedValue({
@@ -19,7 +19,7 @@ describe('landing page', () => {
     cookieGetMock.mockReturnValue({ value: 'verified' });
   });
 
-  it('shows the MVP navigation and reads the cookie-backed session on /', async () => {
+  it('renders the MVP dashboard, deferred modules, demo auth note, and real shell routes', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     render(await RootLayout({ children: Page() }));
@@ -35,11 +35,8 @@ describe('landing page', () => {
       screen.getByRole('heading', { name: /studyabroad hub/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/current demo role: verified/i),
+      main.getByRole('heading', { name: /active mvp routes/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/verified status: yes/i)).toBeInTheDocument();
-    expect(cookiesMock).toHaveBeenCalledTimes(1);
-    expect(cookieGetMock).toHaveBeenCalledWith('demo_role');
     expect(
       main.getByRole('link', { name: /school explorer/i }),
     ).toHaveAttribute('href', '/explorer');
@@ -56,7 +53,25 @@ describe('landing page', () => {
       primaryNav.getByRole('link', { name: /home/i }),
     ).toHaveAttribute('href', '/');
     expect(
-      main.getByText(/community modules are deferred/i),
+      primaryNav.getByRole('link', { name: /school explorer/i }),
+    ).toHaveAttribute('href', '/explorer');
+    expect(
+      main.getByRole('heading', { name: /deferred modules/i }),
+    ).toBeInTheDocument();
+    expect(
+      main.getByText(/area guide/i),
+    ).toBeInTheDocument();
+    expect(
+      main.getByText(/marketplace/i),
+    ).toBeInTheDocument();
+    expect(
+      main.getByText(/events/i),
+    ).toBeInTheDocument();
+    expect(
+      main.getByRole('heading', { name: /demo auth/i }),
+    ).toBeInTheDocument();
+    expect(
+      main.getByText(/firebase/i),
     ).toBeInTheDocument();
   });
 });
