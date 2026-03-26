@@ -196,6 +196,48 @@ describe('submitVerificationAction', () => {
     expect(submitVerificationRequestMock).toHaveBeenCalledTimes(1);
   });
 
+  it('returns a generic inline error when the seed loader fails', async () => {
+    resolveDemoSessionMock.mockResolvedValue({
+      role: 'basic',
+      isVerified: false,
+      displayName: 'Basic',
+    });
+    loadSchoolSeedMock.mockImplementation(() => {
+      throw new Error('seed file missing');
+    });
+
+    const formData = new FormData();
+    formData.set('schoolId', 'boston-university');
+    formData.set('method', 'manual_review');
+    formData.set('evidenceSummary', 'passport and transcript');
+
+    const result = await submitVerificationAction({ status: 'idle' }, formData);
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Verification request could not be submitted.',
+    });
+    expect(submitVerificationRequestMock).not.toHaveBeenCalled();
+  });
+
+  it('maps unknown domain failures to a generic inline error', async () => {
+    submitVerificationRequestMock.mockImplementation(() => {
+      throw new Error('database offline');
+    });
+
+    const formData = new FormData();
+    formData.set('schoolId', 'boston-university');
+    formData.set('method', 'manual_review');
+    formData.set('evidenceSummary', 'passport and transcript');
+
+    const result = await submitVerificationAction({ status: 'idle' }, formData);
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Verification request could not be submitted.',
+    });
+  });
+
   it('returns inline error state for invalid form input without mutation', async () => {
     const formData = new FormData();
     formData.set('schoolId', 'boston-university');

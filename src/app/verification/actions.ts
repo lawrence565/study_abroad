@@ -49,8 +49,17 @@ function buildSuccessState(
   };
 }
 
+const inlineErrorMessages = new Set<string>([
+  'Select a school.',
+  'Select a verification method.',
+  'School email is required for school_email verification.',
+  'Manual review requires an evidence summary.',
+  'School email domain must match the selected school record.',
+  'School email must include a domain.',
+]);
+
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) {
+  if (error instanceof Error && inlineErrorMessages.has(error.message)) {
     return error.message;
   }
 
@@ -96,8 +105,8 @@ export async function submitVerificationAction(
       );
     }
 
-    const schools = loadSchools();
     try {
+      const schools = loadSchools();
       const request = submitRequest(
         {
           schoolId,
@@ -127,8 +136,8 @@ export async function submitVerificationAction(
     return buildError('Manual review requires an evidence summary.');
   }
 
-  const schools = loadSchools();
   try {
+    const schools = loadSchools();
     const request = submitRequest(
       {
         schoolId,

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import RootLayout from '@/app/layout';
+import { submitVerificationAction } from '@/app/verification/actions';
 import Page from '@/app/verification/page';
 import { loadSchoolSeed } from '@/lib/schools/load-seed';
 import { resolveDemoSession } from '@/lib/auth/demo-session';
@@ -61,6 +62,9 @@ describe('verification page', () => {
     expect(
       screen.getAllByText(/current demo role: basic/i),
     ).toHaveLength(2);
+    expect(useActionStateMock).toHaveBeenCalled();
+    expect(useActionStateMock.mock.calls[0]?.[0]).toBe(submitVerificationAction);
+    expect(useActionStateMock.mock.calls[0]?.[1]).toEqual({ status: 'idle' });
   });
 
   it('shows a normalized request summary on the verification page', async () => {
@@ -101,6 +105,7 @@ describe('verification page', () => {
       screen.getByText(/boston university \(bu\.edu\)/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/student@bu\.edu/i)).toBeInTheDocument();
+    expect(useActionStateMock.mock.calls[0]?.[0]).toBe(submitVerificationAction);
   });
 
   it('shows a validation message on the verification page', async () => {
@@ -130,5 +135,6 @@ describe('verification page', () => {
         /school email is required for school_email verification\./i,
       ),
     ).toBeInTheDocument();
+    expect(useActionStateMock.mock.calls[0]?.[0]).toBe(submitVerificationAction);
   });
 });
