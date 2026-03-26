@@ -56,6 +56,15 @@ describe('landing page integration', () => {
       primaryNav.getByRole('link', { name: /school explorer/i }),
     ).toHaveAttribute('href', '/explorer');
     expect(
+      primaryNav.getByRole('link', { name: /profile match/i }),
+    ).toHaveAttribute('href', '/profile-match');
+    expect(
+      primaryNav.getByRole('link', { name: /verification/i }),
+    ).toHaveAttribute('href', '/verification');
+    expect(
+      primaryNav.getByRole('link', { name: /sign in/i }),
+    ).toHaveAttribute('href', '/sign-in');
+    expect(
       main.getByRole('heading', { name: /deferred modules/i }),
     ).toBeInTheDocument();
     expect(
