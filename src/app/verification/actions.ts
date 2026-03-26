@@ -49,6 +49,14 @@ function buildSuccessState(
   };
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return 'Verification request could not be submitted.';
+}
+
 export async function submitVerificationAction(
   _previousState: VerificationActionState,
   formData: FormData,
@@ -61,7 +69,12 @@ export async function submitVerificationAction(
     dependencies.submitVerificationRequest ?? submitVerificationRequest;
 
   const session = await resolveSession();
-  void session;
+
+  if (session.role === 'guest') {
+    return buildError(
+      'Verification requests require a basic or verified demo role.',
+    );
+  }
 
   const schoolId = readFormValue(formData, 'schoolId');
   const method = readFormValue(formData, 'method') as VerificationMethod | '';
@@ -84,11 +97,43 @@ export async function submitVerificationAction(
     }
 
     const schools = loadSchools();
+    try {
+      const request = submitRequest(
+        {
+          schoolId,
+          method,
+          schoolEmail,
+        },
+        {
+          schoolRepository: buildSchoolRepository(schools),
+          verificationRequestRepository: {
+            create(request) {
+              return request;
+            },
+          },
+          now: dependencies.now,
+        },
+      );
+
+      return buildSuccessState(request);
+    } catch (error) {
+      return buildError(getErrorMessage(error));
+    }
+  }
+
+  const evidenceSummary = readFormValue(formData, 'evidenceSummary');
+
+  if (!evidenceSummary) {
+    return buildError('Manual review requires an evidence summary.');
+  }
+
+  const schools = loadSchools();
+  try {
     const request = submitRequest(
       {
         schoolId,
         method,
-        schoolEmail,
+        evidenceSummary,
       },
       {
         schoolRepository: buildSchoolRepository(schools),
@@ -102,31 +147,7 @@ export async function submitVerificationAction(
     );
 
     return buildSuccessState(request);
+  } catch (error) {
+    return buildError(getErrorMessage(error));
   }
-
-  const evidenceSummary = readFormValue(formData, 'evidenceSummary');
-
-  if (!evidenceSummary) {
-    return buildError('Manual review requires an evidence summary.');
-  }
-
-  const schools = loadSchools();
-  const request = submitRequest(
-    {
-      schoolId,
-      method,
-      evidenceSummary,
-    },
-    {
-      schoolRepository: buildSchoolRepository(schools),
-      verificationRequestRepository: {
-        create(request) {
-          return request;
-        },
-      },
-      now: dependencies.now,
-    },
-  );
-
-  return buildSuccessState(request);
 }

@@ -17,7 +17,7 @@ describe('submitVerificationRequest', () => {
           now: () => new Date('2026-03-26T00:00:00.000Z'),
         },
       ),
-    ).toThrow(/evidence/i);
+    ).toThrow('Manual review requires an evidence summary.');
   });
 
   it('rejects school_email submissions whose domain does not match the selected school record', () => {
@@ -35,7 +35,7 @@ describe('submitVerificationRequest', () => {
           now: () => new Date('2026-03-26T00:00:00.000Z'),
         },
       ),
-    ).toThrow(/domain/i);
+    ).toThrow('School email domain must match the selected school record.');
   });
 
   it('returns normalized school_email fields through the repository seam', () => {

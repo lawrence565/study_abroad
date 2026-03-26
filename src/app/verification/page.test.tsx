@@ -2,9 +2,19 @@ import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import RootLayout from '@/app/layout';
 import Page from '@/app/verification/page';
-import { VerificationForm } from '@/components/verification-form';
 import { loadSchoolSeed } from '@/lib/schools/load-seed';
 import { resolveDemoSession } from '@/lib/auth/demo-session';
+
+const useActionStateMock = vi.hoisted(() => vi.fn());
+
+vi.mock('react', async () => {
+  const actual = await vi.importActual<typeof import('react')>('react');
+
+  return {
+    ...actual,
+    useActionState: useActionStateMock,
+  };
+});
 
 vi.mock('@/lib/auth/demo-session', () => ({
   resolveDemoSession: vi.fn(),
@@ -19,6 +29,12 @@ describe('verification page', () => {
       isVerified: false,
       displayName: 'Basic',
     });
+    useActionStateMock.mockReset();
+    useActionStateMock.mockImplementation((_action, initialState) => [
+      initialState,
+      vi.fn(),
+      false,
+    ]);
   });
 
   it('renders the form with compact school options and the shared shell role', async () => {
@@ -47,32 +63,36 @@ describe('verification page', () => {
     ).toHaveLength(2);
   });
 
-  it('shows a normalized request summary for a successful school_email submission', () => {
+  it('shows a normalized request summary on the verification page', async () => {
+    useActionStateMock.mockReturnValue([
+      {
+        status: 'success',
+        message: 'Verification request submitted.',
+        request: {
+          id: 'request-1',
+          schoolId: 'boston-university',
+          schoolName: 'Boston University',
+          schoolDomain: 'bu.edu',
+          method: 'school_email',
+          schoolEmail: 'student@bu.edu',
+          submittedAt: '2026-03-26T00:00:00.000Z',
+        },
+      },
+      vi.fn(),
+      false,
+    ]);
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     render(
-      <VerificationForm
-        schools={[
-          {
-            id: 'boston-university',
-            name: 'Boston University',
-          },
-        ]}
-        currentRole="basic"
-        action={vi.fn()}
-        initialState={{
-          status: 'success',
-          message: 'Verification request submitted.',
-          request: {
-            id: 'request-1',
-            schoolId: 'boston-university',
-            schoolName: 'Boston University',
-            schoolDomain: 'bu.edu',
-            method: 'school_email',
-            schoolEmail: 'student@bu.edu',
-            submittedAt: '2026-03-26T00:00:00.000Z',
-          },
-        }}
-      />,
+      await RootLayout({
+        children: await Page({
+          searchParams: Promise.resolve({}),
+        }),
+      }),
     );
+
+    consoleErrorSpy.mockRestore();
 
     expect(
       screen.getByText(/verification request submitted\./i),
@@ -83,23 +103,27 @@ describe('verification page', () => {
     expect(screen.getByText(/student@bu\.edu/i)).toBeInTheDocument();
   });
 
-  it('shows a validation message for an inline error state', () => {
+  it('shows a validation message on the verification page', async () => {
+    useActionStateMock.mockReturnValue([
+      {
+        status: 'error',
+        message: 'School email is required for school_email verification.',
+      },
+      vi.fn(),
+      false,
+    ]);
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     render(
-      <VerificationForm
-        schools={[
-          {
-            id: 'boston-university',
-            name: 'Boston University',
-          },
-        ]}
-        currentRole="basic"
-        action={vi.fn()}
-        initialState={{
-          status: 'error',
-          message: 'School email is required for school_email verification.',
-        }}
-      />,
+      await RootLayout({
+        children: await Page({
+          searchParams: Promise.resolve({}),
+        }),
+      }),
     );
+
+    consoleErrorSpy.mockRestore();
 
     expect(
       screen.getByText(
