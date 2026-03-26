@@ -56,8 +56,8 @@ export default function Page() {
       <section aria-labelledby="demo-auth-heading">
         <h2 id="demo-auth-heading">Demo Auth</h2>
         <p>
-          Demo auth is cookie-backed for the web MVP, and Firebase Auth plus
-          Firestore are the planned replacement once the real backend lands.
+          Demo auth is cookie-backed for the web MVP. A future Firebase/Firestore
+          replacement is planned once the real backend lands.
         </p>
       </section>
     </section>

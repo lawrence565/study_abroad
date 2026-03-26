@@ -80,7 +80,10 @@ describe('landing page integration', () => {
       main.getByRole('heading', { name: /demo auth/i }),
     ).toBeInTheDocument();
     expect(
-      main.getByText(/firebase/i),
+      main.getByText(/demo auth is cookie-backed for the web mvp/i),
+    ).toBeInTheDocument();
+    expect(
+      main.getByText(/future firebase\/firestore replacement/i),
     ).toBeInTheDocument();
   });
 });
