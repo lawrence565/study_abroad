@@ -143,7 +143,10 @@ Behavior:
 - read current demo session on the server
 - compose a lightweight dashboard summary
 - render direct links to delivered routes
-- render deferred-module summary
+- render deferred-module summary for:
+  - `Area Guide`
+  - `Marketplace`
+  - `Events`
 - explain that auth is demo-session based and Firebase is deferred
 
 This page should not require client-side state.
@@ -195,6 +198,27 @@ Behavior:
 
 `?role=` is not a runtime source of truth in this design.
 
+Cookie contract:
+- cookie name: `demo_role`
+- allowed values: `guest | basic | verified`
+- scope: path `/`
+- same-site policy: `lax`
+- httpOnly: `true`
+- secure: `true` in production, `false` in local development
+- lifetime: session-scoped cookie for this MVP
+
+Resolved server session shape:
+
+```ts
+type DemoSession = {
+  role: 'guest' | 'basic' | 'verified';
+  isVerified: boolean;
+  displayName: 'Guest' | 'Basic' | 'Verified';
+};
+```
+
+The cookie remains the only persisted source of truth. The server session object is derived from that cookie on each request.
+
 ### 5.5 `/verification`
 
 Purpose:
@@ -214,6 +238,41 @@ Behavior:
 
 The action does not redirect away from the page. The result remains visible in place so the flow demos clearly.
 
+Verification action contract:
+
+Input fields:
+- `schoolId: string`
+- `method: 'school_email' | 'manual_review'`
+- `schoolEmail?: string`
+- `evidenceSummary?: string`
+
+Action result shape:
+
+```ts
+type VerificationActionResult =
+  | {
+      status: 'idle';
+    }
+  | {
+      status: 'success';
+      request: {
+        id: string;
+        schoolId: string;
+        schoolName: string;
+        schoolDomain: string;
+        method: 'school_email' | 'manual_review';
+        submittedAt: string;
+      };
+      message: string;
+    }
+  | {
+      status: 'error';
+      message: string;
+    };
+```
+
+For success rendering, the UI may show additional safe fields that already exist on the normalized request object, such as `schoolEmail` or `evidenceSummary`, but the fields above are the minimum contract the page must rely on.
+
 ---
 
 ## 6. Data Flow Design
@@ -222,6 +281,12 @@ The action does not redirect away from the page. The result remains visible in p
 
 Source of truth:
 - cookie-backed demo session
+
+Cookie details:
+- cookie key: `demo_role`
+- value: one role string only
+- no JSON payload
+- session-scoped lifetime
 
 Flow:
 - `layout` resolves session on the server
