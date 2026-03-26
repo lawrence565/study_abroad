@@ -23,6 +23,7 @@ describe('setDemoRoleAction', () => {
     setCookieMock.mockReset();
     cookiesMock.mockResolvedValue({ set: setCookieMock } as never);
     redirectMock.mockClear();
+    vi.unstubAllEnvs();
   });
 
   it.each([
@@ -86,5 +87,22 @@ describe('setDemoRoleAction', () => {
     });
     expect(cookie).not.toHaveProperty('expires');
     expect(cookie).not.toHaveProperty('maxAge');
+  });
+
+  it('marks the cookie secure in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const formData = new FormData();
+    formData.set('role', 'verified');
+
+    await expect(setDemoRoleAction(formData)).rejects.toThrow(
+      'REDIRECT:/sign-in',
+    );
+
+    expect(setCookieMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        secure: true,
+      }),
+    );
   });
 });
