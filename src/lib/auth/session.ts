@@ -1,5 +1,7 @@
 import type { DemoRole, DemoSession } from '@/types/auth';
 
+export const demoRoleCookieName = 'demo_role';
+
 const demoRoleLabels: Record<DemoRole, string> = {
   guest: 'Guest',
   basic: 'Basic',

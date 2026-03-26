@@ -2,6 +2,7 @@ import type { DemoRole } from '@/types/auth';
 
 type SignInPanelProps = {
   currentRole: DemoRole;
+  action: (formData: FormData) => void | Promise<void>;
 };
 
 const roleActions: Array<{
@@ -26,16 +27,19 @@ const roleActions: Array<{
   },
 ];
 
-export function SignInPanel({ currentRole }: SignInPanelProps) {
+export function SignInPanel({ currentRole, action }: SignInPanelProps) {
   return (
     <section aria-labelledby="demo-sign-in-heading">
       <h2 id="demo-sign-in-heading">Demo role options</h2>
       <p>Current demo role: {currentRole}.</p>
       <ul>
-        {roleActions.map((action) => (
-          <li key={action.role}>
-            <a href={`/sign-in?role=${action.role}`}>{action.label}</a>
-            <p>{action.description}</p>
+        {roleActions.map((roleAction) => (
+          <li key={roleAction.role}>
+            <form action={action}>
+              <input type="hidden" name="role" value={roleAction.role} />
+              <button type="submit">{roleAction.label}</button>
+            </form>
+            <p>{roleAction.description}</p>
           </li>
         ))}
       </ul>

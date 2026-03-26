@@ -1,8 +1,16 @@
-import type { DemoRole, DemoSession } from '@/types/auth';
-import { createDemoSession, normalizeDemoRole } from '@/lib/auth/session';
+import { cookies } from 'next/headers';
+import type { DemoSession } from '@/types/auth';
+import {
+  createDemoSession,
+  demoRoleCookieName,
+  normalizeDemoRole,
+} from '@/lib/auth/session';
 
-export function resolveDemoSession(role: string | string[] | undefined): DemoSession {
-  return createDemoSession(normalizeDemoRole(role));
+export async function resolveDemoSession(): Promise<DemoSession> {
+  const cookieStore = await cookies();
+  const role = normalizeDemoRole(cookieStore.get(demoRoleCookieName)?.value);
+
+  return createDemoSession(role);
 }
 
-export { createDemoSession };
+export { createDemoSession, demoRoleCookieName, normalizeDemoRole };

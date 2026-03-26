@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/app-shell';
+import { resolveDemoSession } from '@/lib/auth/demo-session';
 
 export const metadata: Metadata = {
   title: 'StudyAbroad Hub',
@@ -11,11 +12,13 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const session = await resolveDemoSession();
+
   return (
     <html lang="en">
       <body>
-        <AppShell>{children}</AppShell>
+        <AppShell session={session}>{children}</AppShell>
       </body>
     </html>
   );

@@ -11,8 +11,8 @@ type VerificationPageProps = {
 };
 
 export default async function Page({ searchParams }: VerificationPageProps) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const session = resolveDemoSession(resolvedSearchParams.role);
+  await searchParams;
+  const session = await resolveDemoSession();
   const schools = loadSchoolSeed();
 
   return (
