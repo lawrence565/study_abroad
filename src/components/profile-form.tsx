@@ -2,14 +2,14 @@ import type { SchoolCountry } from '@/types/schools';
 
 type ProfileFormProps = {
   gpa: string;
-  testScore: string;
+  standardizedScore: string;
   targetCountry: string;
   countries: readonly SchoolCountry[];
 };
 
 export function ProfileForm({
   gpa,
-  testScore,
+  standardizedScore,
   targetCountry,
   countries,
 }: ProfileFormProps) {
@@ -27,15 +27,19 @@ export function ProfileForm({
         placeholder="3.7"
       />
 
-      <label htmlFor="profile-test-score">Test score</label>
+      <label htmlFor="profile-standardized-score">Standardized score</label>
+      <p>
+        Use one comparable score for SAT, ACT, TOEFL, IELTS, GRE, or similar
+        standardized requirements.
+      </p>
       <input
-        id="profile-test-score"
-        name="testScore"
+        id="profile-standardized-score"
+        name="standardizedScore"
         type="number"
         min="0"
         max="120"
         step="1"
-        defaultValue={testScore}
+        defaultValue={standardizedScore}
         placeholder="95"
       />
 

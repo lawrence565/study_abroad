@@ -6,7 +6,7 @@ import type { SchoolCountry } from '@/types/schools';
 
 type SearchParams = {
   gpa?: string | string[];
-  testScore?: string | string[];
+  standardizedScore?: string | string[];
   country?: string | string[];
 };
 
@@ -35,13 +35,13 @@ function parseNumber(value: string): number | undefined {
 function ProfileMatchPageContent({ searchParams }: { searchParams: SearchParams }) {
   const schools = loadSchoolSeed();
   const gpa = firstValue(searchParams.gpa);
-  const testScore = firstValue(searchParams.testScore);
+  const standardizedScore = firstValue(searchParams.standardizedScore);
   const targetCountry = firstValue(searchParams.country);
   const countries = Array.from(new Set(schools.map((school) => school.country)));
   const results = scoreProfile(
     {
       gpa: parseNumber(gpa),
-      languageScore: parseNumber(testScore),
+      standardizedScore: parseNumber(standardizedScore),
       targetCountry: targetCountry as SchoolCountry | '',
     },
     schools,
@@ -53,7 +53,7 @@ function ProfileMatchPageContent({ searchParams }: { searchParams: SearchParams 
       <p>Compare a student profile against the seeded school programs.</p>
       <ProfileForm
         gpa={gpa}
-        testScore={testScore}
+        standardizedScore={standardizedScore}
         targetCountry={targetCountry}
         countries={countries}
       />

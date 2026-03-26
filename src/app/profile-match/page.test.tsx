@@ -7,7 +7,7 @@ describe('profile match page', () => {
       await Page({
         searchParams: Promise.resolve({
           gpa: '2.5',
-          testScore: '50',
+          standardizedScore: '50',
           country: 'UK',
         }),
       }),
@@ -17,7 +17,7 @@ describe('profile match page', () => {
       screen.getByRole('heading', { name: /^profile match$/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/gpa/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/test score/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/standardized score/i)).toBeInTheDocument();
     expect(
       screen.getByRole('combobox', { name: /target country/i }),
     ).toBeInTheDocument();

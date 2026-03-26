@@ -4,7 +4,7 @@ export type ProfileMatchBand = 'Reach' | 'Match' | 'Safety';
 
 export type ProfileMatchInput = {
   gpa?: number;
-  languageScore?: number;
+  standardizedScore?: number;
   targetCountry?: SchoolCountry | '';
 };
 

@@ -17,17 +17,20 @@ function normalizeGpa(gpa: number | undefined): number | undefined {
   return clamp((gpa / 4) * 100, 0, 100);
 }
 
-function normalizeLanguageScore(
-  languageScore: number | undefined,
+function normalizeStandardizedScore(
+  standardizedScore: number | undefined,
 ): number | undefined {
-  if (typeof languageScore !== 'number' || Number.isNaN(languageScore)) {
+  if (
+    typeof standardizedScore !== 'number' ||
+    Number.isNaN(standardizedScore)
+  ) {
     return undefined;
   }
 
-  return clamp((languageScore / 120) * 100, 0, 100);
+  return clamp((standardizedScore / 120) * 100, 0, 100);
 }
 
-type RequirementModel = 'gpa' | 'language' | 'unmodeled';
+type RequirementModel = 'gpa' | 'standardized' | 'unmodeled';
 
 function classifyRequirement(requirement: string): RequirementModel {
   const normalizedRequirement = requirement.toLowerCase();
@@ -38,9 +41,13 @@ function classifyRequirement(requirement: string): RequirementModel {
     normalizedRequirement.includes('language proficiency') ||
     normalizedRequirement.includes('ielts') ||
     normalizedRequirement.includes('toefl') ||
-    normalizedRequirement.includes('duolingo')
+    normalizedRequirement.includes('duolingo') ||
+    normalizedRequirement.includes('sat') ||
+    normalizedRequirement.includes('act') ||
+    normalizedRequirement.includes('gre') ||
+    normalizedRequirement.includes('gmat')
   ) {
-    return 'language';
+    return 'standardized';
   }
 
   if (
@@ -62,7 +69,7 @@ function describeRequirement(requirement: string): string {
 function scoreRequirement(
   requirement: string,
   gpaScore: number | undefined,
-  languageScore: number | undefined,
+  standardizedScore: number | undefined,
 ): {
   score?: number;
   reason: string;
@@ -86,19 +93,19 @@ function scoreRequirement(
     };
   }
 
-  if (requirementModel === 'language') {
-    if (languageScore === undefined) {
+  if (requirementModel === 'standardized') {
+    if (standardizedScore === undefined) {
       return {
-        reason: `${requirement} is modeled by language score, but no language score was provided.`,
+        reason: `${requirement} is modeled by the standardized score, but no standardized score was provided.`,
       };
     }
 
     return {
-      score: languageScore,
+      score: standardizedScore,
       reason:
-        languageScore >= 75
-          ? `Language score is a strong fit for the ${requirementText} requirement.`
-          : `Language score is a modest fit for the ${requirementText} requirement.`,
+        standardizedScore >= 75
+          ? `Standardized score is a strong fit for the ${requirementText} requirement.`
+          : `Standardized score is a modest fit for the ${requirementText} requirement.`,
     };
   }
 
@@ -113,9 +120,11 @@ function scoreProgram(
   program: SchoolProgram,
 ): ProfileMatchResult {
   const gpaScore = normalizeGpa(profile.gpa);
-  const languageScore = normalizeLanguageScore(profile.languageScore);
+  const standardizedScore = normalizeStandardizedScore(
+    profile.standardizedScore,
+  );
   const requirementEvaluations = program.requirements.map((requirement) =>
-    scoreRequirement(requirement, gpaScore, languageScore),
+    scoreRequirement(requirement, gpaScore, standardizedScore),
   );
   const modeledRequirementScores = requirementEvaluations.flatMap((evaluation) =>
     evaluation.score === undefined ? [] : [evaluation.score],
