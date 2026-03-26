@@ -2,24 +2,24 @@ import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import RootLayout from '@/app/layout';
 import Page from '@/app/page';
-import { resolveDemoSession } from '@/lib/auth/demo-session';
 
-vi.mock('@/lib/auth/demo-session', () => ({
-  resolveDemoSession: vi.fn(),
+const cookiesMock = vi.hoisted(() => vi.fn());
+const cookieGetMock = vi.hoisted(() => vi.fn());
+
+vi.mock('next/headers', () => ({
+  cookies: cookiesMock,
 }));
 
 describe('landing page', () => {
-  const resolveDemoSessionMock = vi.mocked(resolveDemoSession);
-
   beforeEach(() => {
-    resolveDemoSessionMock.mockResolvedValue({
-      role: 'verified',
-      isVerified: true,
-      displayName: 'Verified',
-    });
+    cookieGetMock.mockReset();
+    cookiesMock.mockResolvedValue({
+      get: cookieGetMock,
+    } as never);
+    cookieGetMock.mockReturnValue({ value: 'verified' });
   });
 
-  it('shows the MVP navigation and summary', async () => {
+  it('shows the MVP navigation and reads the cookie-backed session on /', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     render(await RootLayout({ children: Page() }));
@@ -33,6 +33,8 @@ describe('landing page', () => {
       screen.getByText(/current demo role: verified/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/verified status: yes/i)).toBeInTheDocument();
+    expect(cookiesMock).toHaveBeenCalledTimes(1);
+    expect(cookieGetMock).toHaveBeenCalledWith('demo_role');
     expect(
       screen.getByRole('link', { name: /school explorer/i }),
     ).toHaveAttribute('href', '/explorer');
