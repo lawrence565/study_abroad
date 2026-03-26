@@ -196,6 +196,25 @@ describe('submitVerificationAction', () => {
     expect(submitVerificationRequestMock).toHaveBeenCalledTimes(1);
   });
 
+  it('surfaces unknown school errors inline from submitVerificationAction', async () => {
+    const formData = new FormData();
+
+    submitVerificationRequestMock.mockImplementation(() => {
+      throw new Error('Unknown school: missing-school');
+    });
+
+    formData.set('schoolId', 'missing-school');
+    formData.set('method', 'manual_review');
+    formData.set('evidenceSummary', 'passport and transcript');
+
+    const result = await submitVerificationAction({ status: 'idle' }, formData);
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Unknown school: missing-school',
+    });
+  });
+
   it('returns a generic inline error when the seed loader fails', async () => {
     resolveDemoSessionMock.mockResolvedValue({
       role: 'basic',

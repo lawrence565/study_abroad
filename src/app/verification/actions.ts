@@ -59,8 +59,14 @@ const inlineErrorMessages = new Set<string>([
 ]);
 
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && inlineErrorMessages.has(error.message)) {
-    return error.message;
+  if (error instanceof Error) {
+    if (inlineErrorMessages.has(error.message)) {
+      return error.message;
+    }
+
+    if (error.message.startsWith('Unknown school: ')) {
+      return error.message;
+    }
   }
 
   return 'Verification request could not be submitted.';
