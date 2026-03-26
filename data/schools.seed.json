@@ -1,0 +1,120 @@
+{
+  "schools": [
+    {
+      "id": "massachusetts-institute-of-technology",
+      "name": "Massachusetts Institute of Technology",
+      "country": "US",
+      "city": "Cambridge",
+      "ranking": 1,
+      "emailDomain": "mit.edu",
+      "website": "https://www.mit.edu",
+      "programs": [
+        {
+          "code": "BS-CS",
+          "name": "Computer Science",
+          "level": "undergraduate",
+          "requirements": [
+            "High school transcript",
+            "SAT or ACT"
+          ]
+        },
+        {
+          "code": "BS-ENG",
+          "name": "Engineering",
+          "level": "undergraduate",
+          "requirements": [
+            "High school transcript",
+            "Strong math preparation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "boston-university",
+      "name": "Boston University",
+      "country": "US",
+      "city": "Boston",
+      "ranking": 27,
+      "emailDomain": "bu.edu",
+      "website": "https://www.bu.edu",
+      "programs": [
+        {
+          "code": "BS-CS",
+          "name": "Computer Science",
+          "level": "undergraduate",
+          "requirements": [
+            "High school transcript",
+            "SAT or ACT"
+          ]
+        },
+        {
+          "code": "MS-DS",
+          "name": "Data Science",
+          "level": "graduate",
+          "requirements": [
+            "Bachelor's degree",
+            "English proficiency"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imperial-college-london",
+      "name": "Imperial College London",
+      "country": "UK",
+      "city": "London",
+      "ranking": 38,
+      "emailDomain": "imperial.ac.uk",
+      "website": "https://www.imperial.ac.uk",
+      "programs": [
+        {
+          "code": "BS-CS",
+          "name": "Computer Science",
+          "level": "undergraduate",
+          "requirements": [
+            "A-levels",
+            "Mathematics"
+          ]
+        },
+        {
+          "code": "MS-ENG",
+          "name": "Engineering",
+          "level": "graduate",
+          "requirements": [
+            "Bachelor's degree",
+            "References"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "university-of-oxford",
+      "name": "University of Oxford",
+      "country": "UK",
+      "city": "Oxford",
+      "ranking": 2,
+      "emailDomain": "ox.ac.uk",
+      "website": "https://www.ox.ac.uk",
+      "programs": [
+        {
+          "code": "BA-PPE",
+          "name": "Philosophy, Politics and Economics",
+          "level": "undergraduate",
+          "requirements": [
+            "A-levels",
+            "Admissions test"
+          ]
+        },
+        {
+          "code": "MPhil-IR",
+          "name": "International Relations",
+          "level": "graduate",
+          "requirements": [
+            "Bachelor's degree",
+            "Writing sample"
+          ]
+        }
+      ]
+    }
+  ]
+}
