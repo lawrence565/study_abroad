@@ -121,6 +121,11 @@ Behavior:
 - the shell reflects the same role immediately after navigation
 
 This flow must no longer depend on query params as the main source of truth.
+For this closure slice, `?role=` is removed from runtime behavior entirely rather than kept as a fallback. The only supported product path is:
+- read role from cookie
+- update role through the sign-in flow
+
+Tests should set role state through the same cookie/session helpers or equivalent server-facing seams, not through route query params.
 
 ### 5.3 Verification Submission Flow
 
@@ -128,14 +133,16 @@ This flow must no longer depend on query params as the main source of truth.
 
 Behavior:
 - the page loads school options from the existing seed data
-- the form posts to a server-side controller/action
-- the controller/action:
+- the form posts to a same-page server action
+- the server action:
   - parses form input
   - loads the school repository dependency
   - calls `submitVerificationRequest`
-  - returns either:
-    - a success state containing the normalized request summary
-    - an error state containing a user-visible validation message
+  - returns a same-page result state
+    - success: inline normalized request summary
+    - failure: inline validation error message
+
+This flow does **not** redirect after submit. The same `/verification` page re-renders with the result state so the demo can show both failure and success paths clearly.
 
 Supported methods remain:
 - `school_email`
@@ -172,7 +179,9 @@ The landing page becomes the MVP dashboard and must include:
 
 Project polish also includes:
 - `README.md` covering setup, test, build, demo routes, and deferred scope
-- explicit `outputFileTracingRoot` in Next config so build behavior is pinned to the repo root
+- explicit `outputFileTracingRoot` in Next config so file tracing is pinned to the repo root
+
+This Next config change is included because the current build already emits a workspace-root inference warning caused by a parent lockfile. The intent is not new capability; it is to make the MVP build behavior explicit and stable.
 
 ---
 
