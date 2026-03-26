@@ -107,4 +107,3 @@ export function loadSchoolSeed(): SchoolSeedFile['schools'] {
 
   return parsedSeed.schools.map(parseSchool);
 }
-

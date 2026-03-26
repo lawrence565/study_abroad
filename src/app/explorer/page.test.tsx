@@ -1,14 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
 import Page from '@/app/explorer/page';
 
 describe('explorer page', () => {
-  it('shows the search controls and seeded school cards by default', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    render(<Page />);
-
-    consoleErrorSpy.mockRestore();
+  it('shows the search controls and seeded school cards by default', async () => {
+    render(await Page({ searchParams: Promise.resolve({}) }));
 
     expect(
       screen.getByRole('heading', { name: /school explorer/i }),
@@ -26,12 +21,15 @@ describe('explorer page', () => {
     expect(screen.getAllByText(/sat or act/i).length).toBeGreaterThan(0);
   });
 
-  it('shows an empty state when filtered results are empty', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    render(<Page searchParams={{ q: 'quantum basket weaving', country: 'US' }} />);
-
-    consoleErrorSpy.mockRestore();
+  it('shows an empty state when filtered results are empty', async () => {
+    render(
+      await Page({
+        searchParams: Promise.resolve({
+          q: 'quantum basket weaving',
+          country: 'US',
+        }),
+      }),
+    );
 
     expect(
       screen.getByText(/no schools match your search/i),

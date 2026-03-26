@@ -10,7 +10,7 @@ type SearchParams = {
 };
 
 type ExplorerPageProps = {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>;
 };
 
 function firstValue(value: string | string[] | undefined): string {
@@ -21,7 +21,7 @@ function firstValue(value: string | string[] | undefined): string {
   return value ?? '';
 }
 
-export default function Page({ searchParams = {} }: ExplorerPageProps) {
+function ExplorerPageContent({ searchParams }: { searchParams: SearchParams }) {
   const schools = loadSchoolSeed();
   const query = firstValue(searchParams.q);
   const country = firstValue(searchParams.country);
@@ -45,3 +45,8 @@ export default function Page({ searchParams = {} }: ExplorerPageProps) {
   );
 }
 
+export default async function Page({ searchParams }: ExplorerPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+
+  return <ExplorerPageContent searchParams={resolvedSearchParams} />;
+}
