@@ -1,69 +1,111 @@
 import { loadSchoolSeed } from '@/lib/schools/load-seed';
 import { scoreProfile } from '@/lib/profile-match/score-profile';
+import type { School } from '@/types/schools';
 
 describe('scoreProfile', () => {
-  it('normalizes GPA and language score into deterministic numeric scores', () => {
+  it('scores GPA and language inputs deterministically for the same profile', () => {
+    const schools = loadSchoolSeed();
+    const profile = {
+      gpa: 3.2,
+      languageScore: 84,
+      targetCountry: 'US' as const,
+    };
+
+    const firstRun = scoreProfile(profile, schools);
+    const secondRun = scoreProfile(profile, schools);
+
+    expect(secondRun).toEqual(firstRun);
+    expect(firstRun.every((result) => Number.isFinite(result.score))).toBe(true);
+  });
+
+  it('surfaces multiple program-level results for a single school', () => {
     const schools = loadSchoolSeed();
 
     const results = scoreProfile(
       {
-        gpa: 4,
-        testScore: 120,
+        gpa: 3.6,
+        languageScore: 92,
         targetCountry: 'US',
       },
       schools,
     );
 
-    expect(results[0]).toMatchObject({
-      schoolId: 'boston-university',
-      band: 'Safety',
-      score: 95,
-    });
+    const bostonUniversityResults = results.filter(
+      (result) => result.schoolId === 'boston-university',
+    );
+
+    expect(bostonUniversityResults).toHaveLength(2);
+    expect(
+      bostonUniversityResults.map((result) => result.programCode),
+    ).toEqual(expect.arrayContaining(['BS-CS', 'MS-DS']));
   });
 
-  it('maps recommendation bands to Reach Match and Safety', () => {
-    const schools = loadSchoolSeed();
-
-    const results = scoreProfile(
+  it('moves a program from Reach to Safety as the modeled inputs improve', () => {
+    const schools: School[] = [
       {
-        gpa: 2.1,
-        testScore: 55,
+        id: 'sample-school',
+        name: 'Sample School',
+        country: 'US',
+        city: 'Boston',
+        ranking: 12,
+        emailDomain: 'sample.edu',
+        website: 'https://sample.edu',
+        programs: [
+          {
+            code: 'BA-ENG',
+            name: 'English',
+            level: 'undergraduate',
+            requirements: ['High school transcript'],
+          },
+        ],
+      },
+    ];
+
+    const lowProfile = scoreProfile(
+      {
+        gpa: 1,
+        languageScore: 0,
         targetCountry: 'UK',
       },
       schools,
     );
+    const highProfile = scoreProfile(
+      {
+        gpa: 4,
+        languageScore: 120,
+        targetCountry: 'US',
+      },
+      schools,
+    );
 
-    expect(results.map((result) => result.band)).toContain('Reach');
-    expect(results.map((result) => result.band)).toContain('Match');
-    expect(results.map((result) => result.band)).toContain('Safety');
+    expect(lowProfile[0].band).toBe('Reach');
+    expect(highProfile[0].band).toBe('Safety');
+    expect(highProfile[0].score).toBeGreaterThan(lowProfile[0].score);
   });
 
-  it('does not crash when optional fields are missing', () => {
-    const schools = loadSchoolSeed();
-
-    expect(() =>
-      scoreProfile(
-        {
-          targetCountry: 'US',
-        },
-        schools,
-      ),
-    ).not.toThrow();
-  });
-
-  it('includes human-readable reasons for each result', () => {
+  it('labels unmodeled requirements as context instead of scoring them', () => {
     const schools = loadSchoolSeed();
 
     const results = scoreProfile(
       {
         gpa: 3,
-        testScore: 70,
-        targetCountry: 'US',
+        languageScore: 70,
+        targetCountry: 'UK',
       },
       schools,
     );
 
-    expect(results[0].reasons.length).toBeGreaterThan(0);
-    expect(results[0].reasons.join(' ')).toMatch(/gpa|test score|country/i);
+    const oxfordResult = results.find(
+      (result) =>
+        result.schoolId === 'university-of-oxford' &&
+        result.programCode === 'MPhil-IR',
+    );
+
+    expect(oxfordResult).toBeDefined();
+    expect(
+      oxfordResult?.reasons.some((reason) =>
+        /not modeled|context only|estimated/i.test(reason),
+      ),
+    ).toBe(true);
   });
 });

@@ -17,43 +17,94 @@ function normalizeGpa(gpa: number | undefined): number | undefined {
   return clamp((gpa / 4) * 100, 0, 100);
 }
 
-function normalizeTestScore(testScore: number | undefined): number | undefined {
-  if (typeof testScore !== 'number' || Number.isNaN(testScore)) {
+function normalizeLanguageScore(
+  languageScore: number | undefined,
+): number | undefined {
+  if (typeof languageScore !== 'number' || Number.isNaN(languageScore)) {
     return undefined;
   }
 
-  return clamp((testScore / 120) * 100, 0, 100);
+  return clamp((languageScore / 120) * 100, 0, 100);
 }
 
-function scoreRequirement(
-  requirement: string,
-  gpaScore: number | undefined,
-  testScore: number | undefined,
-): number {
+type RequirementModel = 'gpa' | 'language' | 'unmodeled';
+
+function classifyRequirement(requirement: string): RequirementModel {
   const normalizedRequirement = requirement.toLowerCase();
+
+  if (
+    normalizedRequirement.includes('english proficiency') ||
+    normalizedRequirement.includes('english language proficiency') ||
+    normalizedRequirement.includes('language proficiency') ||
+    normalizedRequirement.includes('ielts') ||
+    normalizedRequirement.includes('toefl') ||
+    normalizedRequirement.includes('duolingo')
+  ) {
+    return 'language';
+  }
 
   if (
     normalizedRequirement.includes('transcript') ||
     normalizedRequirement.includes('a-level') ||
     normalizedRequirement.includes('mathematics') ||
-    normalizedRequirement.includes('math') ||
-    normalizedRequirement.includes("bachelor's degree")
+    normalizedRequirement.includes('math preparation')
   ) {
-    return gpaScore ?? 50;
+    return 'gpa';
   }
 
-  if (
-    normalizedRequirement.includes('sat') ||
-    normalizedRequirement.includes('act') ||
-    normalizedRequirement.includes('admissions test') ||
-    normalizedRequirement.includes('english proficiency') ||
-    normalizedRequirement.includes('writing sample') ||
-    normalizedRequirement.includes('references')
-  ) {
-    return testScore ?? 50;
+  return 'unmodeled';
+}
+
+function describeRequirement(requirement: string): string {
+  return requirement.toLowerCase();
+}
+
+function scoreRequirement(
+  requirement: string,
+  gpaScore: number | undefined,
+  languageScore: number | undefined,
+): {
+  score?: number;
+  reason: string;
+} {
+  const requirementModel = classifyRequirement(requirement);
+  const requirementText = describeRequirement(requirement);
+
+  if (requirementModel === 'gpa') {
+    if (gpaScore === undefined) {
+      return {
+        reason: `${requirement} is modeled by GPA, but no GPA was provided.`,
+      };
+    }
+
+    return {
+      score: gpaScore,
+      reason:
+        gpaScore >= 75
+          ? `GPA is a strong fit for the ${requirementText} requirement.`
+          : `GPA is a modest fit for the ${requirementText} requirement.`,
+    };
   }
 
-  return 70;
+  if (requirementModel === 'language') {
+    if (languageScore === undefined) {
+      return {
+        reason: `${requirement} is modeled by language score, but no language score was provided.`,
+      };
+    }
+
+    return {
+      score: languageScore,
+      reason:
+        languageScore >= 75
+          ? `Language score is a strong fit for the ${requirementText} requirement.`
+          : `Language score is a modest fit for the ${requirementText} requirement.`,
+    };
+  }
+
+  return {
+    reason: `${requirement} is not modeled in this MVP, so it is treated as context only.`,
+  };
 }
 
 function scoreProgram(
@@ -62,15 +113,18 @@ function scoreProgram(
   program: SchoolProgram,
 ): ProfileMatchResult {
   const gpaScore = normalizeGpa(profile.gpa);
-  const testScore = normalizeTestScore(profile.testScore);
-  const requirementScores = program.requirements.map((requirement) =>
-    scoreRequirement(requirement, gpaScore, testScore),
+  const languageScore = normalizeLanguageScore(profile.languageScore);
+  const requirementEvaluations = program.requirements.map((requirement) =>
+    scoreRequirement(requirement, gpaScore, languageScore),
+  );
+  const modeledRequirementScores = requirementEvaluations.flatMap((evaluation) =>
+    evaluation.score === undefined ? [] : [evaluation.score],
   );
   const requirementScore =
-    requirementScores.length > 0
-      ? requirementScores.reduce((sum, value) => sum + value, 0) /
-        requirementScores.length
-      : 70;
+    modeledRequirementScores.length > 0
+      ? modeledRequirementScores.reduce((sum, value) => sum + value, 0) /
+        modeledRequirementScores.length
+      : 50;
   const countryScore =
     profile.targetCountry === undefined || profile.targetCountry === ''
       ? 80
@@ -79,13 +133,7 @@ function scoreProgram(
         : 45;
   const selectivityScore = clamp(20 + school.ranking * 2, 20, 100);
 
-  const parts = [
-    gpaScore ?? 50,
-    testScore ?? 50,
-    countryScore,
-    requirementScore,
-    selectivityScore,
-  ];
+  const parts = [requirementScore, countryScore, selectivityScore];
   const score = Math.round(
     parts.reduce((sum, value) => sum + value, 0) / parts.length,
   );
@@ -96,36 +144,8 @@ function scoreProgram(
         ? 'Target country matches this school.'
         : `Target country differs from this school's country.`
       : 'No target country was provided, so country fit is treated as neutral.',
+    ...requirementEvaluations.map((evaluation) => evaluation.reason),
   ];
-
-  if (typeof profile.gpa === 'number') {
-    reasons.push(
-      gpaScore !== undefined && gpaScore >= 75
-        ? 'GPA is a strong fit for the academic requirements.'
-        : 'GPA is below the stronger end of the academic range.',
-    );
-  } else {
-    reasons.push('No GPA was provided, so academic fit is partially estimated.');
-  }
-
-  if (typeof profile.testScore === 'number') {
-    reasons.push(
-      testScore !== undefined && testScore >= 75
-        ? 'Test score supports the program requirements.'
-        : 'Test score is a modest fit for the program requirements.',
-    );
-  } else {
-    reasons.push(
-      'No test score was provided, so test-based requirements are partially estimated.',
-    );
-  }
-
-  const missingAcademicRequirements = program.requirements.filter((requirement) =>
-    requirement.toLowerCase().includes('degree'),
-  );
-  if (missingAcademicRequirements.length > 0 && typeof profile.gpa !== 'number') {
-    reasons.push('This program includes degree-level requirements that are not fully measured here.');
-  }
 
   return {
     schoolId: school.id,
@@ -140,21 +160,11 @@ function scoreProgram(
   };
 }
 
-function pickBestProgram(
+function scorePrograms(
   profile: ProfileMatchInput,
   school: School,
-): ProfileMatchResult {
-  const rankedPrograms = school.programs.map((program) =>
-    scoreProgram(profile, school, program),
-  );
-
-  return rankedPrograms.sort((left, right) => {
-    if (left.score !== right.score) {
-      return right.score - left.score;
-    }
-
-    return left.programName.localeCompare(right.programName);
-  })[0];
+): ProfileMatchResult[] {
+  return school.programs.map((program) => scoreProgram(profile, school, program));
 }
 
 export function scoreProfile(
@@ -162,7 +172,7 @@ export function scoreProfile(
   schools: readonly School[],
 ): ProfileMatchResult[] {
   return [...schools]
-    .map((school) => pickBestProgram(profile, school))
+    .flatMap((school) => scorePrograms(profile, school))
     .sort((left, right) => {
       if (left.score !== right.score) {
         return right.score - left.score;

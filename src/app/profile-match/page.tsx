@@ -41,7 +41,7 @@ function ProfileMatchPageContent({ searchParams }: { searchParams: SearchParams 
   const results = scoreProfile(
     {
       gpa: parseNumber(gpa),
-      testScore: parseNumber(testScore),
+      languageScore: parseNumber(testScore),
       targetCountry: targetCountry as SchoolCountry | '',
     },
     schools,

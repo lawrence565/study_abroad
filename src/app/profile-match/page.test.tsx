@@ -31,7 +31,11 @@ describe('profile match page', () => {
       screen.getByRole('heading', { name: /^safety$/i, level: 2 }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText(/target country matches this school/i).length,
+      screen.getAllByRole('heading', { name: /^boston university$/i, level: 3 })
+        .length,
+    ).toBeGreaterThan(1);
+    expect(
+      screen.getAllByText(/not modeled in this mvp|context only/i).length,
     ).toBeGreaterThan(0);
   });
 });
