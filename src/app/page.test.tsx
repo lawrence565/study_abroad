@@ -1,14 +1,19 @@
 import { render, screen } from '@testing-library/react';
-import { AppShell } from '@/components/app-shell';
+import { vi } from 'vitest';
+import RootLayout from '@/app/layout';
 import Page from '@/app/page';
 
 describe('landing page', () => {
   it('shows the MVP navigation and summary', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     render(
-      <AppShell>
+      <RootLayout>
         <Page />
-      </AppShell>,
+      </RootLayout>,
     );
+
+    consoleErrorSpy.mockRestore();
 
     expect(
       screen.getByRole('heading', { name: /studyabroad hub/i }),
